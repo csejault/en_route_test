@@ -3,8 +3,8 @@ services:
     # Fix version to control upgrades
     image: twinproduction/gatus:v5.36.0
     env_file:
-      - gatus.env
+      - secrets/gatus.env
     ports:
-      - "${GATUS_EXT_PORT}:8080"
+      - "${GATUS_EXT_PORT}:${GATUS_INT_PORT}"
     volumes:
       - ./config:/config

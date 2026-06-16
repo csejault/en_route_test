@@ -9,6 +9,13 @@ alerting:
     webhook-url: $GATUS_ALERT_WEBHOOK_URL
 
 
+web:
+  port: $GATUS_INT_PORT
+  tls:
+    certificate-file: "/config/certificate.crt"
+    private-key-file: "/config/private.key"
+
+
 endpoints:
   - name: enRoute portal
     url: "https://enroute.mobi"

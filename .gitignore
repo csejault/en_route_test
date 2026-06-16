@@ -1,1 +1,4 @@
 *.env
+config/certificate.crt
+config/private.key
+secrets/
