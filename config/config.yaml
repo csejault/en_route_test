@@ -1,0 +1,59 @@
+security:
+  basic:
+    username: $GATUS_SEC_USER
+    password-bcrypt-base64: $GATUS_SEC_USER_PASSWORD
+
+
+alerting:
+  discord:
+    webhook-url: $GATUS_ALERT_WEBHOOK_URL
+
+
+endpoints:
+  - name: enRoute portal
+    url: "https://enroute.mobi"
+    group: "enRoute"
+    interval: 15s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+      - "[BODY] == pat(*Book a demo*)"
+    alerts:
+      - type: discord
+        description: "web tests failed for enRoute portal"
+        send-on-resolved: true
+
+  - name: Chouette SaaS
+    url: "https://chouette.enroute.mobi"
+    group: "enRoute"
+    interval: 15s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+      - "[BODY] == pat(*Bienvenue sur Chouette*)"
+    alerts:
+      - type: discord
+        description: "web tests failed for Chouette Saas"
+        send-on-resolved: true
+
+  - name: Ara Saas
+    url: "https://ara.enroute.mobi"
+    group: "enRoute"
+    interval: 15s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+      - "[BODY] == pat(*Bienvenue sur Ara*)"
+    alerts:
+      - type: discord
+        description: "web tests failed for Ara Saas"
+        send-on-resolved: true
