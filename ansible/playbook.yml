@@ -57,9 +57,9 @@
         enabled: yes
 
 ### Create app, compose and gatus directory
-    - name: Create /app directory and give permissions to {{ vm_user }}
+    - name: Create {{ vm_app_dir }} directory and give permissions to {{ vm_user }}
       ansible.builtin.file:
-        path: /app
+        path: "{{ vm_app_dir }}"
         state: directory
         owner: "{{ vm_user }}"
         group: "{{ vm_user }}"
