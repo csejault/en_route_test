@@ -1,14 +1,17 @@
+# Configure basic authentification
 security:
   basic:
     username: $GATUS_USER
     password-bcrypt-base64: $GATUS_USER_PASSWORD
 
 
+# Configure Alerting with discord
 alerting:
   discord:
     webhook-url: $GATUS_ALERT_DISCORD_WEBHOOK_URL
 
 
+# Activate tls
 web:
   port: $GATUS_INT_PORT
   tls:
@@ -16,6 +19,7 @@ web:
     private-key-file: $GATUS_PRIVATE_PATH
 
 
+# Monitoring configuration
 endpoints:
   - name: enRoute portal
     url: "https://enroute.mobi"

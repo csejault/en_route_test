@@ -7,11 +7,7 @@
     - secret.yml
 
   tasks:
-
-    #- name: Print all available facts
-    #  ansible.builtin.debug:
-    #    var: ansible_facts
-
+### DOCKER COMPOSE INSTALLATION
     - name: Update apt cache
       ansible.builtin.apt:
         update_cache: yes
@@ -60,6 +56,7 @@
         state: started
         enabled: yes
 
+### Create app, compose and gatus directory
     - name: Create /app directory and give permissions to {{ vm_user }}
       ansible.builtin.file:
         path: /app
@@ -84,6 +81,7 @@
         group: "{{ vm_user }}"
         mode: "0700"
 
+### Creation of the env file using templates
     - name: Create .env file for docker-compose
       ansible.builtin.template:
         src: env.j2
@@ -100,6 +98,7 @@
         group: "{{ vm_user }}"
         mode: '0600'
 
+  ### Creation of compose and gatus files.
     - name: Create compose.yaml for docker-compose
       ansible.builtin.copy:
         src: files/compose.yaml
@@ -108,7 +107,6 @@
         group: "{{ vm_user }}"
         mode: '0600'
 
-    
     - name: Create {{ gatus_private_name }} for gatus
       ansible.builtin.copy:
         content: "{{ vault_gatus_tls_private_key }}"
