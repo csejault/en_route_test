@@ -1,4 +1,3 @@
-*.env
-config/certificate.crt
-config/private.key
-secrets/
+*/secret.yml
+*/hosts.ini
+

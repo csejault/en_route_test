@@ -1,19 +1,19 @@
 security:
   basic:
-    username: $GATUS_SEC_USER
-    password-bcrypt-base64: $GATUS_SEC_USER_PASSWORD
+    username: $GATUS_USER
+    password-bcrypt-base64: $GATUS_USER_PASSWORD
 
 
 alerting:
   discord:
-    webhook-url: $GATUS_ALERT_WEBHOOK_URL
+    webhook-url: $GATUS_ALERT_DISCORD_WEBHOOK_URL
 
 
 web:
   port: $GATUS_INT_PORT
   tls:
-    certificate-file: "/config/certificate.crt"
-    private-key-file: "/config/private.key"
+    certificate-file: $GATUS_CERT_PATH
+    private-key-file: $GATUS_PRIVATE_PATH
 
 
 endpoints:

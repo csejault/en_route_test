@@ -61,7 +61,7 @@ gateway 192.168.100.1
 nameserver 8.8.8.8
 nameserver 1.1.1.1
 ```
-
+- reboot or reload the service
 #### add the source-list repository
 add the http Debian sources as recommended by the [Debian documentation](https://wiki.debian.org/SourcesList)
 To use this format, create a file called like /etc/apt/sources.list.d/debian.sources :
@@ -72,20 +72,34 @@ Suites: trixie trixie-updates
 Components: main non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 ```
-#### upgrade vm
-#todo  to continue
 
----
-## Activate PAT on Proxmox
-- To allow our VM to be accessible from outside we need to create a PAT rule. On Proxmox shell, launch the following command where `OUTSIDE IP/PORT` are the ip/port reachable and `DEST IP/PORT` are the ip/port you want to give access to :
+>**At this point our VM is connected to internet and can install programs from Debian repository**
+#### Install qemu-guest-agent
+this is optional but this program facilitate the console integration in the web browser and the communication between the VM and Proxmox
 ```shell
-iptables -t nat -A PREROUTING -p tcp -d {OUTSIDE IP} --dport {OUTSIDE PORT} -i vmbr0 -j DNAT --to-destination {DEST IP}:{DEST PORT}
+sudo apt update
+apt install -y qemu-guest-agent
 ```
-- **You will need a rule to allow https and another rule if you want to give access to ssh. In this project it is not recommended to do so because there is no firewall to filter the incoming traffic.**
-Dont forget to save the new configuration. Otherwise it will be lost at reboot time :
+#### active qemu agent on Proxmox
+Shutdown the VM and activate the qemu agent in the VM option in Proxmox the start the vm again
+
+#### Install git and ansible and download the repository
+This step is to download the git repo and start using ansible for the configuration
 ```shell
-iptables-save > /etc/iptables.conf
+sudo apt update
+apt install -y git ansible
 ```
+
+#todo clone repo
+git clone git@github.com:csejault/en_route_test.git
+
+## Lauch ansible
+```shell
+ansible-playbook playbook.yml -i hosts.ini --ask-vault-pass
+```
+
+## Launch docker-compose
+sudo docker-compose up #todo 
 
 ---
 ## Deploy Gatus on the VM
@@ -101,24 +115,41 @@ You can use this Hash in the security field of the [config_file](./config/config
 
 ---
 ## Open a public https access to the Gatus interface
+### Activate PAT on Proxmox
+- To allow our VM to be accessible from outside we need to create a PAT rule. On Proxmox shell, launch the following command where `OUTSIDE IP/PORT` are the ip/port reachable and `DEST IP/PORT` are the ip/port you want to give access to :
+```shell
+iptables -t nat -A PREROUTING -p tcp -d {OUTSIDE IP} --dport {OUTSIDE PORT} -i vmbr0 -j DNAT --to-destination {DEST IP}:{DEST PORT}
+```
+- **You will need a rule to allow https and another rule if you want to give access to ssh. In this project it is not recommended to do so because there is no firewall to filter the incoming traffic.**
+Dont forget to save the new configuration. Otherwise it will be lost at reboot time :
+```shell
+iptables-save > /etc/iptables.conf
+```
+
 
 ---
 ## Potential improvment
 ### Proxmox
-- disable root login and create another administrator account
+- disable root login and create another administrator account and only allow a connection with FIDO2 ssh key.
 - change the default network port of proxmox
 - provision VM with Terraform or ansible
 ### VM
 - chose a better password
 - use lvm and partition the disk
-- enable and install qemu agent
+- use cloud init with a clone and then create our vm from the clone (like this we can, set ip and deploy ssh key as soon as the vm start)
 - Disable root SSH login
 ### Gatus
 - do a small script that automate the creation of the base64 bacrypt hash.
 - Use OIDC for the security
 - use yaml anchor to avoid to repeat configuration
 - set PostgreSQL to store the logs
-- use a reverse proxy
 - use let's encrypt certificate with a real domain name.
+### Ansible
+use ansible-core and install only the required ansible collection
+use hashicorp vault instead of a local vault
+### Architecture
+- use a reverse proxy before Gatus
+- put a firewall between vmbr0 and vmbr1
+
 ### This doc
 follow guidelines for table of content : https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax

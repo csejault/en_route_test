@@ -1,0 +1,134 @@
+---
+
+- name: Configure Gatus VM
+  hosts: localhost
+  become: true
+  vars_files:
+    - secret.yml
+
+  tasks:
+
+    #- name: Print all available facts
+    #  ansible.builtin.debug:
+    #    var: ansible_facts
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Ensure dependencies are installed
+      ansible.builtin.package:
+        name:
+          - gnupg
+        state: present
+
+    - name: Create Docker GPG key directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker's official GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker repository to Apt sources
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ vm_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Update apt cache after adding Docker repository
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Docker and Docker Compose
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker service is enabled and started
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create /app directory and give permissions to {{ vm_user }}
+      ansible.builtin.file:
+        path: /app
+        state: directory
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: "0700"
+
+    - name: Create {{ vm_compose_dir }} directory
+      ansible.builtin.file:
+        path: "{{ vm_compose_dir }}"
+        state: directory
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: "0700"
+
+    - name: Create {{ vm_gatus_dir }} directory
+      ansible.builtin.file:
+        path: "{{ vm_gatus_dir }}"
+        state: directory
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: "0700"
+
+    - name: Create .env file for docker-compose
+      ansible.builtin.template:
+        src: env.j2
+        dest: "{{ vm_compose_dir }}/.env"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
+
+    - name: Create gatus.env file for docker-compose
+      ansible.builtin.template:
+        src: gatus.env.j2
+        dest: "{{ vm_compose_dir }}/gatus.env"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
+
+    - name: Create compose.yaml for docker-compose
+      ansible.builtin.copy:
+        src: files/compose.yaml
+        dest: "{{ vm_compose_dir }}/compose.yaml"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
+
+    
+    - name: Create {{ gatus_private_name }} for gatus
+      ansible.builtin.copy:
+        content: "{{ vault_gatus_tls_private_key }}"
+        dest: "{{ vm_gatus_dir }}/{{ gatus_private_name }}"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
+
+    - name: Create {{ gatus_cert_name }} for gatus
+      ansible.builtin.copy:
+        content: "{{ vault_gatus_tls_certificate }}"
+        dest: "{{ vm_gatus_dir }}/{{ gatus_cert_name }}"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
+
+    - name: Create config.yaml for gatus
+      ansible.builtin.copy:
+        src: files/gatus_config.yaml
+        dest: "{{ vm_gatus_dir }}/config.yaml"
+        owner: "{{ vm_user }}"
+        group: "{{ vm_user }}"
+        mode: '0600'
