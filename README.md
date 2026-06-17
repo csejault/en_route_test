@@ -1,7 +1,37 @@
-In this document, we will see how to deploy Gatus on Proxmox with Ansible and Docker, based on [those requirements](https://bitbucket.org/enroute-mobi/test-sysadmin/src/main/)
+This project automates the deployment of [Gatus](https://github.com/TwiN/gatus), a lightweight self-hosted health-check dashboard, on a Debian virtual machine hosted on Proxmox. It follows the requirements described in [this specification](https://bitbucket.org/enroute-mobi/test-sysadmin/src/main/), and uses Ansible to prepare the host while Docker Compose runs Gatus in a container, secured with TLS and basic authentication.
 ## Table of content
 #todo to update
-	
+- [Technologies used](#technologies-used)
+- [Usage](#usage)
+  - [Clone the repository](#clone-the-repository)
+  - [Import the inventory and secret file or create it](#import-the-inventory-and-secret-file-or-create-it)
+  - [Configuration](#configuration)
+    - [secret.yml](#secretyml)
+      - [How to Generate a bcrypt base64 hash for `vault_gatus_user_password`](#how-to-generate-a-bcrypt-base64-hash-forvault_gatus_user_password)
+    - [inventory.yml](#inventoryyml)
+    - [Configure Gatus monitoring](#configure-gatus-monitoring)
+  - [Deploy Gatus](#deploy-gatus)
+  - [Launch Gatus with docker-compose](#launch-gatus-with-docker-compose)
+- [Configure Proxmox](#configure-proxmox)
+  - [Import debian image](#import-debian-image)
+  - [Setup the network and active NAT](#setup-the-network-and-active-nat)
+- [Create and configure a debian VM with Proxmox](#create-and-configure-a-debian-vm-with-proxmox)
+  - [VM creation with Graphical proxmox web interface](#vm-creation-with-graphical-proxmox-web-interface)
+    - [Creation](#creation)
+  - [VM configuration](#vm-configuration)
+    - [configure the network](#configure-the-network)
+    - [add the source-list repository](#add-the-source-list-repository)
+    - [Install qemu-guest-agent](#install-qemu-guest-agent)
+    - [active qemu agent on Proxmox](#active-qemu-agent-on-proxmox)
+    - [Install git and ansible and download the repository](#install-git-and-ansible-and-download-the-repository)
+- [Open a public https access to the Gatus interface](#open-a-public-https-access-to-the-gatus-interface)
+  - [Activate PAT on Proxmox](#activate-pat-on-proxmox)
+- [Potential improvment](#potential-improvment)
+  - [Proxmox](#proxmox)
+  - [VM](#vm)
+  - [Gatus](#gatus)
+  - [Ansible](#ansible)
+  - [Architecture](#architecture)
 --- 
 ## Technologies used
 Here is links for the documentation of the technologie used in this project :
@@ -14,6 +44,97 @@ Here is links for the documentation of the technologie used in this project :
 | [Docker Compose](https://docs.docker.com/compose/)                     | Multi-container Docker apps via a single YAML file |
 | [Gatus](https://github.com/TwiN/gatus)                                 | Self-hosted  health dashboard                      |
 | [Proxmox](https://pve.proxmox.com/pve-docs/)                           | Virtualization platform                            |
+
+___
+## Usage
+### Clone the repository
+in the user home that admin the server, clone the following repository:
+```shell
+git clone git@github.com:csejault/en_route_test.git
+```
+### Import the inventory and secret file or create it
+For security reason those files are not in the repository because it contain sensitive data. You can import it. If you don't have them you can create it by copying the data from the [configuration section](#configuration).
+### Configuration
+#### secret.yml
+**For security reason this file must be edited with `ansible-vault`. See [Ansible vault documentation](https://docs.ansible.com/projects/ansible/latest/vault_guide/index.html)**
+*location of the file : inside the ansible dir*
+```yaml
+# password of the admin user
+ansible_sudo_pass:
+
+# password for the gatus user. This must be bcrypt and base64 encoded
+vault_gatus_user_password: 
+
+# Webhook used to send alert via discord
+vault_gatus_alert_discord_webhook_url: 
+
+# Private key used by gatus to enable tls
+vault_gatus_tls_private_key: |
+  -----BEGIN PRIVATE KEY-----
+  ...
+  -----END PRIVATE KEY-----
+
+# Certificate used by gatus to enable tls
+vault_gatus_tls_certificate: |
+  -----BEGIN CERTIFICATE-----
+  ...
+  -----END CERTIFICATE-----
+
+```
+##### How to Generate a bcrypt base64 hash for`vault_gatus_user_password`
+I used `htpasswd` commands by running a docker container and install apache2-utils
+```shell
+htpasswd -nBC 12 {USERNAME}
+echo -n {HASH} | base64 -w0  
+```
+
+---
+#### inventory.yml
+*location of the file : inside the ansible dir*
+```yaml
+all:
+  hosts:
+    localhost:
+	  # Type of connection (local if run ansible on the server to configure)
+      ansible_connection: local
+	  # Tls certificate name for gatus
+      gatus_cert_name: XXX
+	  # port exposed by the server
+      gatus_ext_port: XXX 
+	  # port exposed by gatus(inside docker)
+      gatus_int_port: XXX 
+	  # Tls private key name for gatus
+      gatus_private_name: XXX
+	  # gatus username (used to connect to gatus)
+      gatus_user: XXX
+	  # architecture of the server
+      vm_architecture: XXX
+	  # Directory where docker compose dir and gatus dir will be store
+      vm_app_dir: XXX
+	  # Directory where the docker-compose files will be store
+      vm_compose_dir: XXX
+	  # Directory where the gatus files will be store
+      vm_gatus_dir: XXX
+	  # Username of the admin user on the server
+      vm_user: XXX
+```
+#### Configure Gatus monitoring
+It is possible to change the monitoring by modifying the [Gatus configuration file](./ansible/files/gatus_config.yaml). See [Gatus documentation](#technologies-used).
+### Deploy Gatus
+Inside the ansible directory (cloned in this [section](#clone-the-repository)), launch the following command :
+```shell
+ansible-playbook playbook.yml -i inventory.yml --ask-vault-pass
+```
+Running the Ansible playbook will: 
+- install Docker and Docker Compose on the target host,
+- create the directories and files used by Docker Compose and Gatus, and set the correct permissions on them.
+
+### Launch Gatus with docker-compose
+
+#todo reverify playbook to check if we put the user in sudo group
+```
+sudo docker-compose up #todo 
+```
 
 ---
 ## Configure Proxmox
@@ -82,7 +203,6 @@ apt install -y qemu-guest-agent
 ```
 #### active qemu agent on Proxmox
 Shutdown the VM and activate the qemu agent in the VM option in Proxmox the start the vm again
-
 #### Install git and ansible and download the repository
 This step is to download the git repo and start using ansible for the configuration
 ```shell
@@ -90,28 +210,6 @@ sudo apt update
 apt install -y git ansible
 ```
 
-#todo clone repo
-git clone git@github.com:csejault/en_route_test.git
-
-## Lauch ansible
-```shell
-ansible-playbook playbook.yml -i hosts.ini --ask-vault-pass
-```
-
-## Launch docker-compose
-sudo docker-compose up #todo 
-
----
-## Deploy Gatus on the VM
-### Generate a bcrypt hash to store the password
-```shell
-htpasswd -nBC 12 {USERNAME}
-echo -n {HASH} | base64 -w0  
-```
-You can use this Hash in the security field of the [config_file](./config/config.yaml)
-
----
-## Create health checks to monitor a website
 
 ---
 ## Open a public https access to the Gatus interface
@@ -126,7 +224,6 @@ Dont forget to save the new configuration. Otherwise it will be lost at reboot t
 iptables-save > /etc/iptables.conf
 ```
 
-
 ---
 ## Potential improvment
 ### Proxmox
@@ -137,7 +234,9 @@ iptables-save > /etc/iptables.conf
 - chose a better password
 - use lvm and partition the disk
 - use cloud init with a clone and then create our vm from the clone (like this we can, set ip and deploy ssh key as soon as the vm start)
-- Disable root SSH login
+- create a script to install and configure the requirment for ansible
+- create a gatus user (in docker group) without sudo right to do the docker compose up
+- disable ssh (and activate from console if needed)
 ### Gatus
 - do a small script that automate the creation of the base64 bacrypt hash.
 - Use OIDC for the security
@@ -149,7 +248,5 @@ use ansible-core and install only the required ansible collection
 use hashicorp vault instead of a local vault
 ### Architecture
 - use a reverse proxy before Gatus
-- put a firewall between vmbr0 and vmbr1
-
-### This doc
-follow guidelines for table of content : https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax
+- put a firewall between vmbr0 and vmbr1 to filter traffic
+- create a postgres db to store gatus logs.
