@@ -95,27 +95,27 @@ echo -n {HASH} | base64 -w0
 all:
   hosts:
     localhost:
-	  # Type of connection (local if run ansible on the server to configure)
+      # Type of connection (local if run ansible on the server to configure)
       ansible_connection: local
-	  # Tls certificate name for gatus
+      # Tls certificate name for gatus
       gatus_cert_name: XXX
-	  # port exposed by the server
+      # port exposed by the server
       gatus_ext_port: XXX 
-	  # port exposed by gatus(inside docker)
+      # port exposed by gatus(inside docker)
       gatus_int_port: XXX 
-	  # Tls private key name for gatus
+      # Tls private key name for gatus
       gatus_private_name: XXX
-	  # gatus username (used to connect to gatus)
+      # gatus username (used to connect to gatus)
       gatus_user: XXX
-	  # architecture of the server
+      # architecture of the server
       vm_architecture: XXX
-	  # Directory where docker compose dir and gatus dir will be store
+      # Directory where docker compose dir and gatus dir will be store
       vm_app_dir: XXX
-	  # Directory where the docker-compose files will be store
+      # Directory where the docker-compose files will be store
       vm_compose_dir: XXX
-	  # Directory where the gatus files will be store
+      # Directory where the gatus files will be store
       vm_gatus_dir: XXX
-	  # Username of the admin user on the server
+      # Username of the admin user on the server
       vm_user: XXX
 ```
 #### Configure Gatus monitoring
