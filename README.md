@@ -39,8 +39,9 @@ git clone https://github.com/csejault/en_route_test.git
 ### Import the inventory and secret file or create it
 For security reason those files are not in the repository because it contain sensitive data. You can import it. If you don't have them you can create it by copying the data from the [configuration section](#configuration).
 ### Configuration
+**Please restrict the access of secret.yml and inventory.yml**
 #### secret.yml
-**For security reason this file must be edited with `ansible-vault`. See [Ansible vault documentation](https://docs.ansible.com/projects/ansible/latest/vault_guide/index.html)**
+**For security reason this file must be edited with `ansible-vault`. See [Ansible vault documentation](https://docs.ansible.com/projects/ansible/latest/vault_guide/index.html)**. 
 *location of the file : inside the ansible dir*
 ```yaml
 # password of the admin user

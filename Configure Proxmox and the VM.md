@@ -3,6 +3,7 @@
 This guide covers preparing the infrastructure that will host Gatus: configuring a Proxmox node, setting up an isolated NAT network, and creating and configuring the Debian VM, including exposing it to the internet over HTTPS. Once the VM is ready, head over to the main README for the Ansible and Docker Compose steps that actually deploy Gatus on it.
 ## Table of Contents
 
+- [Prerequisites](#prerequisites)
 - [Configure Proxmox](#configure-proxmox)
     - [Import debian image](#import-debian-image)
     - [Setup the network and active NAT](#setup-the-network-and-active-nat)
@@ -17,6 +18,11 @@ This guide covers preparing the infrastructure that will host Gatus: configuring
         - [active qemu agent on Proxmox](#active-qemu-agent-on-proxmox)
         - [Install git and ansible and download the repository](#install-git-and-ansible-and-download-the-repository)
 - [Activate PAT on Proxmox to expose Gatus](#activate-pat-on-proxmox-to-expose-gatus)
+
+---
+## Prerequisites
+- A Proxmox VE node already installed and reachable.
+- One network interface on the Proxmox host with a public ip.
 
 ---
 ## Configure Proxmox
